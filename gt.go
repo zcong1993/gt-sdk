@@ -55,9 +55,9 @@ type RegisterResp struct {
 }
 
 type ValidateForm struct {
-	Challenge string `json:"challenge"`
-	Validate  string `json:"validate"`
-	Seccode   string `json:"seccode"`
+	GeetestChallenge string `json:"geetest_challenge"`
+	GeetestValidate  string `json:"geetest_validate"`
+	GeetestSeccode   string `json:"geetest_seccode"`
 }
 
 func getMd5(in string) string {
@@ -133,14 +133,14 @@ func (gt *Gt) Register(clientType, ipAddress string) (*RegisterResp, error) {
 
 func (gt *Gt) Validate(f *ValidateForm, fallback bool) (bool, error) {
 	if fallback {
-		if getMd5(f.Challenge) == f.Validate {
+		if getMd5(f.GeetestChallenge) == f.GeetestValidate {
 			return true, nil
 		}
 		return false, nil
 	}
 
-	hash := gt.config.GeeTestKey + "geetest" + f.Challenge
-	if f.Validate != getMd5(hash) {
+	hash := gt.config.GeeTestKey + "geetest" + f.GeetestChallenge
+	if f.GeetestValidate != getMd5(hash) {
 		return false, nil
 	}
 
@@ -148,7 +148,7 @@ func (gt *Gt) Validate(f *ValidateForm, fallback bool) (bool, error) {
 
 	form := url.Values{}
 	form.Add("gt", gt.config.GeeTestID)
-	form.Add("seccode", f.Seccode)
+	form.Add("seccode", f.GeetestSeccode)
 	form.Add("json_format", gt.config.JsonFormat)
 
 	resp, err := gt.client.PostForm(u, form)
@@ -171,5 +171,5 @@ func (gt *Gt) Validate(f *ValidateForm, fallback bool) (bool, error) {
 		return false, errors.New("api server error")
 	}
 
-	return getMd5(f.Seccode) == code, nil
+	return getMd5(f.GeetestSeccode) == code, nil
 }
