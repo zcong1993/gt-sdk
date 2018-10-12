@@ -16,6 +16,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
+// Config is gt sdk config
 type Config struct {
 	Protocol     string
 	ApiServer    string
@@ -29,6 +30,7 @@ type Config struct {
 	GeeTestKey string
 }
 
+// DefaultConfig is default config
 var DefaultConfig = &Config{
 	Protocol:     "http://",
 	ApiServer:    "api.geetest.com",
@@ -42,11 +44,13 @@ var DefaultConfig = &Config{
 	GeeTestKey: "3f204e4be8c779614b2ad5caf5a6de8e",
 }
 
+// Gt is geetest sdk struct
 type Gt struct {
 	client *http.Client
 	config Config
 }
 
+// RegisterResp is response type of register func
 type RegisterResp struct {
 	Success    int    `json:"success"`
 	Challenge  string `json:"challenge"`
@@ -54,6 +58,7 @@ type RegisterResp struct {
 	NewCaptcha bool   `json:"new_captcha"`
 }
 
+// ValidateForm is body struct of validate func
 type ValidateForm struct {
 	GeetestChallenge string `json:"geetest_challenge"`
 	GeetestValidate  string `json:"geetest_validate"`
@@ -64,6 +69,7 @@ func getMd5(in string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(in)))
 }
 
+// NewCt init a new instance by a config
 func NewCt(config Config) *Gt {
 	client := &http.Client{Timeout: config.Timeout}
 
@@ -74,6 +80,7 @@ func (gt *Gt) genChallenge() string {
 	return getMd5(fmt.Sprintf("%d", rand.Intn(90))) + getMd5(fmt.Sprintf("%d", rand.Intn(90)))[:2]
 }
 
+// Register get a new challenge code and config for frontend
 func (gt *Gt) Register(clientType, ipAddress string) (*RegisterResp, error) {
 	u := gt.config.Protocol + gt.config.ApiServer + gt.config.RegisterPath
 
@@ -131,6 +138,7 @@ func (gt *Gt) Register(clientType, ipAddress string) (*RegisterResp, error) {
 	}, nil
 }
 
+// Validate validate the action by api
 func (gt *Gt) Validate(f *ValidateForm, fallback bool) (bool, error) {
 	if fallback {
 		if getMd5(f.GeetestChallenge) == f.GeetestValidate {
