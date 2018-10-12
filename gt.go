@@ -101,14 +101,21 @@ func (gt *Gt) Register(clientType, ipAddress string) (*RegisterResp, error) {
 
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 
+	r := &RegisterResp{
+		Success:    0,
+		Challenge:  gt.genChallenge(),
+		Gt:         gt.config.GeeTestID,
+		NewCaptcha: gt.config.NewCaptcha,
+	}
+
 	if err != nil {
-		return nil, err
+		return r, err
 	}
 
 	resp, err := gt.client.Do(req)
 
 	if err != nil {
-		return nil, err
+		return r, err
 	}
 
 	defer resp.Body.Close()
@@ -116,26 +123,15 @@ func (gt *Gt) Register(clientType, ipAddress string) (*RegisterResp, error) {
 	data, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return nil, err
+		return r, err
 	}
 
 	ch := gjson.GetBytes(data, "challenge").String()
 
-	success := 1
+	r.Success = 1
+	r.Challenge = getMd5(ch + gt.config.GeeTestKey)
 
-	if ch == "" {
-		ch = gt.genChallenge()
-		success = 0
-	} else {
-		ch = getMd5(ch + gt.config.GeeTestKey)
-	}
-
-	return &RegisterResp{
-		Success:    success,
-		Challenge:  ch,
-		Gt:         gt.config.GeeTestID,
-		NewCaptcha: gt.config.NewCaptcha,
-	}, nil
+	return r, nil
 }
 
 // Validate validate the action by api

@@ -97,23 +97,19 @@
             if (!result) {
                 return alert('请完成验证');
             }
-            console.log(JSON.stringify({
-                challenge: result.geetest_challenge,
-                validate: result.geetest_validate,
-                seccode: result.geetest_seccode
-            }))
 
             $.ajax({
                 url: '/gt/validate-click',
                 type: 'POST',
                 dataType: 'json',
-                data: {
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify({
                     username: $('#username2').val(),
                     password: $('#password2').val(),
-                    challenge: result.geetest_challenge,
-                    validate: result.geetest_validate,
-                    seccode: result.geetest_seccode
-                },
+                    geetest_challenge: result.geetest_challenge,
+                    geetest_validate: result.geetest_validate,
+                    geetest_seccode: result.geetest_seccode
+                }),
                 success: function (data) {
                     if (data.status === 'success') {
                         alert('登录成功');

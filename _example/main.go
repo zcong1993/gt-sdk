@@ -2,25 +2,36 @@ package main
 
 import (
 	"fmt"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github.com/zcong1993/gt-sdk"
 	"net/http"
 )
 
-var gtClient = gt.NewCt(*gt.DefaultConfig)
 
 func main() {
+	config := gt.DefaultConfig
+	//config.ApiServer = "test.com"
+	gtClient := gt.NewCt(*config)
+
 	r := gin.Default()
+	store := cookie.NewStore([]byte("secret"))
+	r.Use(sessions.Sessions("gtsession", store))
 
 	r.Static("/static", "_example/static")
 
 	r.GET("/gt/register-click", func(c *gin.Context) {
+		session := sessions.Default(c)
 		resp, err := gtClient.Register("", "")
 		if err != nil {
-			fmt.Printf("%+v\n", err)
-			c.Status(http.StatusInternalServerError)
+			session.Set("fallback", true)
+			fmt.Printf("%+v, use fallback\n", err)
+		} else {
+			session.Set("fallback", false)
 		}
 
+		session.Save()
 		c.JSON(http.StatusOK, resp)
 	})
 
@@ -35,7 +46,16 @@ func main() {
 
 		fmt.Printf("%+v\n", f)
 
-		ok, err := gtClient.Validate(&f, false)
+		session := sessions.Default(c)
+		var fallback bool
+		v := session.Get("fallback")
+		if v == nil {
+			fallback = false
+		} else {
+			fallback = v.(bool)
+		}
+
+		ok, err := gtClient.Validate(&f, fallback)
 		resp := map[string]interface{}{}
 
 		if err != nil {
